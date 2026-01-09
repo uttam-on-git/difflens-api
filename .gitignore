@@ -1,0 +1,13 @@
+node_modules/
+screenshot1.png
+screenshot2.png
+diff.png
+.env
+.env.local
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+CLAUDE.md
