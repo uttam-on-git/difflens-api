@@ -1,14 +1,21 @@
 import express from 'express';
+import cors from 'cors';
 import { chromium } from 'playwright';
 import { PNG } from 'pngjs';
 import pixelmatch from 'pixelmatch';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4000;
 
+app.use(cors({
+  origin: 'http://localhost:3000',
+}));
 app.use(express.json());
 
-const VIEWPORT = { width: 1280, height: 720 };
+const VIEWPORTS = {
+  desktop: { width: 1280, height: 720 },
+  mobile: { width: 375, height: 667, isMobile: true },
+};
 
 // crops image to target size
 function cropToSize(png, targetWidth, targetHeight) {
@@ -36,17 +43,19 @@ async function captureScreenshot(page, url) {
 }
 
 app.post('/compare', async (req, res) => {
-  const { url1, url2, threshold = 0.1 } = req.body;
+  const { url1, url2, threshold = 0.1, viewport = 'desktop' } = req.body;
 
   if (!url1 || !url2) {
     return res.status(400).json({ error: 'Missing url1 or url2' });
   }
 
+  const viewportConfig = VIEWPORTS[viewport] || VIEWPORTS.desktop;
+
   let browser;
 
   try {
     browser = await chromium.launch({ headless: true });
-    const context = await browser.newContext({ viewport: VIEWPORT });
+    const context = await browser.newContext({ viewport: viewportConfig, isMobile: viewportConfig.isMobile || false });
     const page = await context.newPage();
 
     const buffer1 = await captureScreenshot(page, url1);
